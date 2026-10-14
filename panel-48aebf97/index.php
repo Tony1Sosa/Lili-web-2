@@ -4,18 +4,22 @@ declare(strict_types=1);
  * Строителна Компания БГ — админ панел за "Директни продажби".
  * Единствената динамична част на сайта. Управлява data/listings.json.
  * Защита: PHP сесия + bcrypt парола (хешът е в config.php, извън Git).
+ * Паролата се задава/сменя през самия панел — няма публичен инструмент за хеширане.
  */
 
-// ---- Secure session ----
+// ---- Secure session (honours a TLS-terminating proxy via X-Forwarded-Proto) ----
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Lax',
-    'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+    'secure'   => $isHttps,
 ]);
 session_start();
 header('X-Robots-Tag: noindex, nofollow');
 header('Referrer-Policy: no-referrer');
 
+$SELF   = 'index.php';
 $CONFIG = __DIR__ . '/config.php';
 $DATA   = __DIR__ . '/../data/listings.json';
 
@@ -39,6 +43,15 @@ function save_listings(string $path, array $listings): bool {
     return file_put_contents($path, $json . "\n", LOCK_EX) !== false;
 }
 
+function config_contents(string $user, string $hash): string {
+    return "<?php\n"
+         . "define('ADMIN_USER', " . var_export($user, true) . ");\n"
+         . "define('ADMIN_PASS_HASH', " . var_export($hash, true) . ");\n";
+}
+function write_config(string $path, string $user, string $hash): bool {
+    return file_put_contents($path, config_contents($user, $hash), LOCK_EX) !== false;
+}
+
 // ---- Config present? ----
 $configOk = is_file($CONFIG);
 if ($configOk) { require $CONFIG; }
@@ -52,11 +65,35 @@ function csrf_ok(): bool {
 
 $flash = '';
 $flashOk = true;
+$manualConfig = '';           // shown when config can't be written to disk
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 $authed = !empty($_SESSION['auth']);
 
-// ---- Handle POST actions ----
+// ---- First-time setup (only while config.php is absent) ----
+if ($method === 'POST' && !$configOk && $action === 'setup') {
+    if (!csrf_ok()) {
+        $flash = 'Невалиден токен (CSRF). Опитайте отново.'; $flashOk = false;
+    } else {
+        $u  = trim((string)($_POST['username'] ?? ''));
+        $p  = (string)($_POST['password'] ?? '');
+        $p2 = (string)($_POST['password2'] ?? '');
+        if ($u === '' || mb_strlen($p) < 8) {
+            $flash = 'Въведете потребител и парола (поне 8 знака).'; $flashOk = false;
+        } elseif ($p !== $p2) {
+            $flash = 'Паролите не съвпадат.'; $flashOk = false;
+        } else {
+            $hash = password_hash($p, PASSWORD_DEFAULT);
+            if (write_config($CONFIG, $u, $hash)) {
+                header('Location: ' . $SELF); exit;
+            }
+            $flash = 'Папката не е записваема. Създайте config.php ръчно със съдържанието по-долу.'; $flashOk = false;
+            $manualConfig = config_contents($u, $hash);
+        }
+    }
+}
+
+// ---- Authenticated / login actions ----
 if ($method === 'POST' && $configOk) {
     if (!csrf_ok()) {
         $flash = 'Невалиден токен (CSRF). Опитайте отново.'; $flashOk = false;
@@ -68,16 +105,33 @@ if ($method === 'POST' && $configOk) {
             session_regenerate_id(true);
             $_SESSION['auth'] = true;
             $_SESSION['csrf'] = bin2hex(random_bytes(16));
-            header('Location: ' . $_SERVER['PHP_SELF']);
-            exit;
+            header('Location: ' . $SELF); exit;
         }
         usleep(700000);
         $flash = 'Грешно потребителско име или парола.'; $flashOk = false;
     } elseif ($authed && $action === 'logout') {
         $_SESSION = [];
         session_destroy();
-        header('Location: ' . $_SERVER['PHP_SELF']);
-        exit;
+        header('Location: ' . $SELF); exit;
+    } elseif ($authed && $action === 'chpass') {
+        $cur = (string)($_POST['current'] ?? '');
+        $new = (string)($_POST['new'] ?? '');
+        $new2 = (string)($_POST['new2'] ?? '');
+        if (!password_verify($cur, ADMIN_PASS_HASH)) {
+            $flash = 'Текущата парола е грешна.'; $flashOk = false;
+        } elseif (mb_strlen($new) < 8) {
+            $flash = 'Новата парола трябва да е поне 8 знака.'; $flashOk = false;
+        } elseif ($new !== $new2) {
+            $flash = 'Новите пароли не съвпадат.'; $flashOk = false;
+        } else {
+            $hash = password_hash($new, PASSWORD_DEFAULT);
+            if (write_config($CONFIG, ADMIN_USER, $hash)) {
+                $flash = 'Паролата е сменена.';
+            } else {
+                $flash = 'config.php не е записваем. Обновете го ръчно със съдържанието по-долу.'; $flashOk = false;
+                $manualConfig = config_contents(ADMIN_USER, $hash);
+            }
+        }
     } elseif ($authed && $action === 'save') {
         $id     = trim((string)($_POST['id'] ?? ''));
         $title  = trim((string)($_POST['title'] ?? ''));
@@ -134,7 +188,7 @@ $csrf = $_SESSION['csrf'];
 <meta name="robots" content="noindex, nofollow">
 <title>Админ панел — Директни продажби</title>
 <style>
-  :root{ --bg:#F7F4EE; --surface:#FBF9F5; --text:#26231E; --muted:#6A6056; --accent:#BB5428; --accent-h:#A3461F; --border:#E0D9CC; --panel:#2E2A24; }
+  :root{ --bg:#F7F4EE; --surface:#FBF9F5; --text:#26231E; --muted:#6A6056; --accent:#A3461F; --accent-h:#8A3817; --border:#E0D9CC; --panel:#2E2A24; }
   *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5}
   .bar{background:var(--panel);color:#F3EEE4;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
   .bar h1{font-size:17px;margin:0} .bar form{margin:0}
@@ -142,7 +196,7 @@ $csrf = $_SESSION['csrf'];
   .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px}
   h2{font-size:20px;margin:0 0 14px} label{display:block;font-weight:600;font-size:13.5px;margin:0 0 5px}
   input,select,textarea{width:100%;font:inherit;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text)}
-  textarea{min-height:90px;resize:vertical}
+  textarea{min-height:90px;resize:vertical} textarea.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;min-height:90px}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:620px){.row{grid-template-columns:1fr}}
   .field{margin-bottom:14px}
   .btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:8px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none}
@@ -154,25 +208,38 @@ $csrf = $_SESSION['csrf'];
   table{width:100%;border-collapse:collapse;font-size:14px} th,td{text-align:left;padding:10px;border-bottom:1px solid var(--border);vertical-align:top}
   th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
   .tagx{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#eee3d6;color:var(--accent-h)}
-  .muted{color:var(--muted)} .login{max-width:380px;margin:60px auto}
+  .muted{color:var(--muted)} .login{max-width:420px;margin:48px auto}
   code{background:#efe9df;padding:2px 6px;border-radius:5px;font-size:13px}
-  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .actions{display:flex;gap:8px;flex-wrap:wrap} details{margin-top:14px} summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
 </style>
 </head>
 <body>
 
-<?php if (!$configOk): ?>
+<?php if ($manualConfig !== ''): ?>
   <div class="wrap">
     <div class="card">
-      <h2>Настройка на панела</h2>
-      <p>Липсва <code>config.php</code>. За да активирате панела на сървъра:</p>
-      <ol>
-        <li>Копирайте <code>config.sample.php</code> като <code>config.php</code>.</li>
-        <li>Задайте потребителско име в <code>ADMIN_USER</code>.</li>
-        <li>Отворете <code>tools/make-hash.php?p=вашата-парола</code>, копирайте хеша в <code>ADMIN_PASS_HASH</code>.</li>
-        <li>Изтрийте <code>tools/make-hash.php</code>.</li>
-      </ol>
-      <p class="muted">Вижте DEPLOYMENT.md за пълните стъпки.</p>
+      <?php if ($flash): ?><div class="flash <?= $flashOk ? 'ok' : 'err' ?>"><?= e($flash) ?></div><?php endif; ?>
+      <h2>Ръчно създаване на config.php</h2>
+      <p class="muted">Папката не позволи автоматичен запис. Създайте файл <code>panel-48aebf97/config.php</code> със следното съдържание:</p>
+      <textarea class="mono" rows="5" readonly onclick="this.select()"><?= e($manualConfig) ?></textarea>
+      <p><a class="btn btn-primary" href="<?= e($SELF) ?>">Готово — продължи</a></p>
+    </div>
+  </div>
+
+<?php elseif (!$configOk): ?>
+  <div class="wrap">
+    <div class="card login">
+      <h2>Първоначална настройка</h2>
+      <?php if ($flash): ?><div class="flash <?= $flashOk ? 'ok' : 'err' ?>"><?= e($flash) ?></div><?php endif; ?>
+      <p class="muted">Задайте потребител и парола за панела. Данните се записват като хеш в <code>config.php</code> (извън Git). Направете го веднага след качване на сайта.</p>
+      <form method="post" autocomplete="off">
+        <input type="hidden" name="action" value="setup">
+        <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+        <div class="field"><label for="su">Потребител</label><input id="su" name="username" value="AdmiN" required autofocus></div>
+        <div class="field"><label for="sp">Парола (мин. 8 знака)</label><input id="sp" type="password" name="password" required></div>
+        <div class="field"><label for="sp2">Повтори паролата</label><input id="sp2" type="password" name="password2" required></div>
+        <button class="btn btn-primary" type="submit">Запази и активирай</button>
+      </form>
     </div>
   </div>
 
@@ -225,7 +292,7 @@ $csrf = $_SESSION['csrf'];
         <div class="field"><label>Описание</label><textarea name="description"><?= e($edit['description'] ?? '') ?></textarea></div>
         <div class="actions">
           <button class="btn btn-primary" type="submit"><?= $edit ? 'Запази промените' : 'Добави обява' ?></button>
-          <?php if ($edit): ?><a class="btn btn-ghost" href="<?= e($_SERVER['PHP_SELF']) ?>">Отказ</a><?php endif; ?>
+          <?php if ($edit): ?><a class="btn btn-ghost" href="<?= e($SELF) ?>">Отказ</a><?php endif; ?>
         </div>
       </form>
     </div>
@@ -259,6 +326,22 @@ $csrf = $_SESSION['csrf'];
         </table>
       <?php endif; ?>
       <p class="muted" style="margin-top:14px;font-size:13px;">Промените се записват в <code>data/listings.json</code> и се показват на страница „Директни продажби“.</p>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>Смяна на парола</summary>
+        <form method="post" autocomplete="off" style="margin-top:14px;">
+          <input type="hidden" name="action" value="chpass">
+          <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+          <div class="field"><label>Текуща парола</label><input type="password" name="current" required></div>
+          <div class="row">
+            <div class="field"><label>Нова парола (мин. 8)</label><input type="password" name="new" required></div>
+            <div class="field"><label>Повтори новата</label><input type="password" name="new2" required></div>
+          </div>
+          <button class="btn btn-primary" type="submit">Смени паролата</button>
+        </form>
+      </details>
     </div>
   </div>
 <?php endif; ?>

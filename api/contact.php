@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 $RECIPIENT = 'stroitelna.compania.bg@gmail.com';
 $SITE_NAME = 'Строителна Компания БГ';
+// Fixed sender domain — do NOT derive from the client Host header (spoofable).
+// Update to the final production domain so it matches the host's SPF/DKIM records.
+$FROM_ADDR = 'no-reply@stroitelna-compania-bg.com';
 
 function is_ajax(): bool {
     $xrw = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
@@ -73,10 +76,9 @@ $body .= 'Телефон: ' . ($phone !== '' ? $phone : '—') . "\n";
 $body .= "Тип обект: {$subject}\n\n";
 $body .= "Съобщение:\n{$message}\n";
 
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $headers  = "MIME-Version: 1.0\r\n";
 $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-$headers .= 'From: ' . $SITE_NAME . ' <no-reply@' . $host . ">\r\n";
+$headers .= 'From: ' . $SITE_NAME . ' <' . $FROM_ADDR . ">\r\n";
 $headers .= 'Reply-To: ' . $email . "\r\n";
 
 $encodedSubject = '=?UTF-8?B?' . base64_encode($mailSubject) . '?=';
