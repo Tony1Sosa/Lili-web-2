@@ -1,0 +1,16 @@
+# --- Admin secrets: created on the server, NEVER committed ---
+panel-48aebf97/config.php
+
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# --- Logs / temp ---
+*.log
+tmp/
+
+# --- Node (not used by this static site, kept for safety) ---
+node_modules/

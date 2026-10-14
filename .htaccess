@@ -1,0 +1,42 @@
+# Строителна Компания БГ — Apache config for production (SuperHosting.bg).
+# NOTE: .htaccess is ignored by GitHub Pages; it only applies on the live Apache host.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS (enable once the SSL certificate is active).
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Optional: allow extensionless URLs (/za-nas -> za-nas.html).
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}\.html -f
+  RewriteRule ^([^.]+)$ $1.html [L]
+</IfModule>
+
+# Custom error page.
+ErrorDocument 404 /404.html
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 6 months"
+  ExpiresByType image/png "access plus 6 months"
+  ExpiresByType image/jpeg "access plus 6 months"
+  ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# Never serve the listings data as something executable; allow read for the site JS.
+<Files "*.json">
+  Require all granted
+</Files>

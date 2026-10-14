@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Контакти — Строителна Компания БГ</title>
+<meta name="description" content="Свържете се със Строителна Компания БГ — офис и производствена база в София, телефони, имейл и форма за заявка на оферта.">
+<link rel="canonical" href="kontakti.html">
+<meta name="theme-color" content="#2E2A24">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="bg_BG">
+<meta property="og:site_name" content="Строителна Компания БГ">
+<meta property="og:title" content="Контакти — Строителна Компания БГ">
+<meta property="og:description" content="Офис и производствена база в София, телефони, имейл и форма за оферта.">
+<meta property="og:image" content="assets/brand/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/brand/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/brand/logo-icon-placeholder.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Mulish:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "GeneralContractor",
+  "name": "Строителна Компания БГ",
+  "telephone": "+359884619013",
+  "email": "stroitelna.compania.bg@gmail.com",
+  "address": { "@type": "PostalAddress", "addressLocality": "София", "addressCountry": "BG", "streetAddress": "Бул. Ломско шосе №277" }
+}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Към съдържанието</a>
+
+<!-- ==== HEADER (keep in sync across all pages) ==== -->
+<header class="site-header">
+  <nav class="nav container" aria-label="Основна навигация">
+    <a class="brand" href="index.html" aria-label="Строителна Компания БГ — начало">
+      <img src="assets/brand/logo-placeholder.svg" alt="Строителна Компания БГ" width="480" height="160">
+    </a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Отвори меню">
+      <span></span>
+    </button>
+    <ul class="nav-links" id="primary-nav">
+      <li><a href="index.html">Начало</a></li>
+      <li><a href="za-nas.html">За нас</a></li>
+      <li><a href="uslugi.html">Услуги</a></li>
+      <li><a href="railing-inox.html">Railing-Inox</a></li>
+      <li><a href="proekti.html">Проекти</a></li>
+      <li><a href="prodazhbi.html">Продажби</a></li>
+      <li><a href="klienti.html">Клиенти</a></li>
+      <li><a href="kontakti.html" aria-current="page">Контакти</a></li>
+      <li class="nav-cta"><a class="btn btn--primary btn--sm" href="kontakti.html#oferta">Заявете оферта</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+
+  <section class="page-intro section--paper">
+    <div class="container">
+      <p class="eyebrow">Контакти</p>
+      <h1>Свържете се с нас</h1>
+      <p class="lead">Разкажете ни за вашия проект — ще изготвим индивидуално решение и оферта.</p>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="container grid grid--sidebar">
+
+      <!-- Offer form -->
+      <div id="oferta">
+        <h2>Заявете оферта</h2>
+        <form class="form" id="offer-form" action="api/contact.php" method="post" novalidate>
+          <div class="field--row">
+            <div class="field">
+              <label for="name">Име <span class="req" aria-hidden="true">*</span></label>
+              <input type="text" id="name" name="name" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label for="phone">Телефон</label>
+              <input type="tel" id="phone" name="phone" autocomplete="tel">
+            </div>
+          </div>
+          <div class="field">
+            <label for="email">Имейл <span class="req" aria-hidden="true">*</span></label>
+            <input type="email" id="email" name="email" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="subject">Тип обект</label>
+            <select id="subject" name="subject">
+              <option value="Жилищно строителство">Жилищно строителство</option>
+              <option value="Бизнес строителство">Бизнес строителство</option>
+              <option value="Паметник на културата / реставрация">Паметник на културата / реставрация</option>
+              <option value="Саниране / СМР">Саниране / СМР</option>
+              <option value="Метални конструкции (Railing-Inox)">Метални конструкции (Railing-Inox)</option>
+              <option value="Директна продажба / имот">Директна продажба / имот</option>
+              <option value="Друго">Друго</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="message">Съобщение <span class="req" aria-hidden="true">*</span></label>
+            <textarea id="message" name="message" required placeholder="Опишете накратко вашия проект или запитване."></textarea>
+          </div>
+          <!-- honeypot (anti-spam) -->
+          <div class="hp" aria-hidden="true"><label>Не попълвайте<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+          <label style="display:flex; gap:10px; align-items:flex-start; font-size:14px; font-weight:400;">
+            <input type="checkbox" name="consent" required style="width:auto; margin-top:4px;">
+            <span>Съгласен/на съм данните ми да бъдат използвани за отговор на запитването.</span>
+          </label>
+          <div id="form-status" class="form-status" role="status" aria-live="polite"></div>
+          <div class="btn-row">
+            <button type="submit" class="btn btn--primary">Изпрати запитване</button>
+          </div>
+          <p class="form__note">Полетата с * са задължителни. Ще се свържем с вас във възможно най-кратък срок.</p>
+        </form>
+      </div>
+
+      <!-- Contact details -->
+      <div>
+        <h2>Данни за контакт</h2>
+        <dl class="info-rows">
+          <div class="info-row"><dt>Офис</dt><dd>гр. София, жк. Люлин 8, ул. 339-та, Етаж 3, ап. 3-2А</dd></div>
+          <div class="info-row"><dt>Производствена база</dt><dd>гр. София, Бул. Ломско шосе №277</dd></div>
+          <div class="info-row"><dt>Телефон</dt><dd><a href="tel:070050507">0700 50 507</a> · <a href="tel:+359884619013">+359 884 61 90 13</a> · <a href="tel:+359884617273">+359 884 617 273</a></dd></div>
+          <div class="info-row"><dt>Имейл</dt><dd><a href="mailto:stroitelna.compania.bg@gmail.com">stroitelna.compania.bg@gmail.com</a></dd></div>
+        </dl>
+        <div class="ph ph--16x9" data-label="Карта: местоположение (ще бъде вграден Google Map)" style="margin-top:18px;"></div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ==== FOOTER (keep in sync across all pages) ==== -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <img class="footer-logo" src="assets/brand/logo-placeholder-dark.svg" alt="Строителна Компания БГ">
+        <p>Над 30 години опит в строителството и производството на метални изделия. Професионализъм, лоялност и отговорност към всеки обект.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Навигация</h4>
+        <ul>
+          <li><a href="za-nas.html">За нас</a></li>
+          <li><a href="uslugi.html">Услуги</a></li>
+          <li><a href="railing-inox.html">Railing-Inox</a></li>
+          <li><a href="proekti.html">Проекти</a></li>
+          <li><a href="prodazhbi.html">Директни продажби</a></li>
+          <li><a href="klienti.html">Клиенти</a></li>
+          <li><a href="grupova-struktura.html">Групова структура</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Дейности</h4>
+        <ul>
+          <li><a href="uslugi.html#jilishtno">Жилищно строителство</a></li>
+          <li><a href="uslugi.html#biznes">Бизнес строителство</a></li>
+          <li><a href="uslugi.html#pametnici">Паметници на културата</a></li>
+          <li><a href="uslugi.html#sanirane">Саниране и СМР</a></li>
+          <li><a href="uslugi.html#metal">Метални конструкции</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Контакти</h4>
+        <p>
+          Производствена база:<br>гр. София, Бул. Ломско шосе №277<br><br>
+          Тел: <a href="tel:070050507">0700 50 507</a><br>
+          <a href="mailto:stroitelna.compania.bg@gmail.com">stroitelna.compania.bg@gmail.com</a>
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year">2026</span> Строителна Компания БГ. Всички права запазени.</span>
+      <span class="footer-brands">Строителство · Реставрация · Railing-Inox</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js" defer></script>
+<script src="js/contact.js" defer></script>
+</body>
+</html>

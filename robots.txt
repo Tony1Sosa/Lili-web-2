@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Админ панелът е noindex чрез заглавки; не се обявява тук.
+
+# Обновете домейна при пускане в production:
+Sitemap: https://www.stroitelna-compania-bg.com/sitemap.xml

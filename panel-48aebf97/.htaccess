@@ -1,0 +1,12 @@
+# Protect sensitive files in the admin panel.
+Options -Indexes
+
+# Deny direct access to configuration files.
+<FilesMatch "^config(\.sample)?\.php$">
+  Require all denied
+</FilesMatch>
+
+# Keep the admin panel out of search engines.
+<IfModule mod_headers.c>
+  Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>
